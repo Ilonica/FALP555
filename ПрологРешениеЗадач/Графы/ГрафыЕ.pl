@@ -31,20 +31,13 @@ edge_directed(11, 2).
 edge_directed(11, 9).
 edge_directed(11, 10).
 
-
-
-% Example graph for task 7.4
-edge_tree(a, b).
-edge_tree(b, c).
-edge_tree(c, d).
-edge_tree(d, e).
-
 % Example graph for task 7.5
 edge_weighted(a, b, 1).
 edge_weighted(b, c, 2).
 edge_weighted(c, d, 3).
 edge_weighted(a, d, 10).
 edge_weighted(d, e, -5).
+
 
 % task1
 % Дан смешанный граф. Дано натуральное число n. Найти количество путей длины n.
@@ -95,7 +88,6 @@ build_independent_set([H|T], CurrentSet, IndependentSet) :-
 
 % task3
 % Дан ориентированный слабосвязный граф. Построить топологическую сортировку вершин этого графа.
-
 % Найти все вершины графа
 vertices(Vertices) :-
     findall(X, (edge_directed(X, _); edge_directed(_, X)), VerticesList), % Находим все вершины графа, учитывая как начальные, так и конечные вершины всех рёбер.
@@ -137,3 +129,59 @@ dfs_list([], _, Visited, Visited). % Если список соседей пус
 dfs_list([H|T], Graph, Visited, Result) :-
     dfs(H, Graph, Visited, NewVisited), % Обходим вершину H.
     dfs_list(T, Graph, NewVisited, Result). % Рекурсивно обходим остальные соседние вершины.
+
+
+
+%task 4
+%Дан произвольный неориентированный граф, проверить, будет ли он деревом.
+%Определение узлов графа
+node(a,graph1).
+node(b,graph1).
+node(c,graph1).
+node(d,graph1).
+
+%Определение рёбер графа
+edge(a,b,graph1).
+edge(b,c,graph1).
+edge(b,d,graph1).
+
+%Проверка смежности двух вершин
+adjacent(X,Y,Graph) :-
+  (edge(X,Y,Graph) ; edge(Y,X,Graph)). %Проверяет, являются ли вершины X и Y смежными в графе Graph (проверка наличия ребра в обоих направлениях, так как граф неориентированный).
+
+%Поиск пути от одной вершины к другой (базовый случай)
+travel(A,B,PathSuffix,Path,Graph) :-
+  adjacent(A,B,Graph),
+  Path = [B|PathSuffix]. %Проверяет, являются ли вершины A и B смежными, и если да, возвращает путь.
+%Поиск пути от одной вершины к другой (рекурсивный случай):
+travel(A,B,PathSuffix,Path,Graph) :-
+  adjacent(A,C,Graph), %Ищет путь от A к B через смежную вершину C, которая не равна B и ещё не посещена (не является членом PathSuffix).
+  C \== B,
+  \+ member(C,PathSuffix),
+  travel(C,B,[C|PathSuffix],Path,Graph).
+
+%Определение пути между двумя вершинами
+path(A,B,Path,Graph) :-
+  travel(A,B,[A],ReversedPath,Graph), %Находит путь от A к B в графе Graph, используя travel, и затем возвращает путь в правильном порядке.
+  reverse(ReversedPath,Path).
+
+%Проверка связности графа
+connected(Graph) :- %Проверяет, что для любой пары вершин A и B в графе Graph существует путь между ними.
+  not((
+    node(A,Graph),
+    node(B,Graph),
+    not(path(A,B,_,Graph))
+  )).
+
+%Проверка наличия цикла в графе
+hascycle(Graph) :- %Проверяет наличие цикла в графе Graph, то есть проверяет, есть ли путь от вершины A к смежной вершине B, который включает хотя бы три узла.
+   node(A,Graph),
+   node(B,Graph),
+   adjacent(A,B,Graph),
+   path(A,B,[A,_,_|_],Graph).
+
+%Пример запуска: tree(graph1).
+tree(Graph) :-
+   connected(Graph),
+   not(hascycle(Graph)).
+
